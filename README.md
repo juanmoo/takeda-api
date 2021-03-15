@@ -14,5 +14,3 @@
 * Methods: GET
 * Body:
     * None
-
-
