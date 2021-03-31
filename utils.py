@@ -5,7 +5,6 @@ import os
 
 # Process Uploaded PDFs
 
-
 def process_uploaded_pdfs(pdfs_dir, xmls_dir, structs_dir, grobid_url=''):
 
     if not grobid_url:
@@ -46,28 +45,6 @@ def process_pdf_file(input_path, output_path, grobid_url):
         with open(output_path, 'w') as xml_file:
             xml_file.write(r.text)
 
-# Extract Utils
-
-def make_empty_ner_bio(struct_path, output_path):
-    bio_dir = formatting.struct_to_bio_dict(struct_path, 1, use_tags=False)
-
-    paragraphs = []
-    
-    for doc_id in bio_dir:
-        pars = bio_dir[doc_id].strip().split('\n\n')
-
-        for j, par in enumerate(pars):
-            par_txt = f'#\tpassage={doc_id}\tpar_idx={j}\n'
-            par_txt += par
-            par_txt = par_txt.strip()
-            paragraphs.append(par_txt)
-    
-    ner_input = '\n\n'.join(paragraphs)
-
-    with open(output_path, 'w') as ner_input_file:
-        ner_input_file.write(ner_input)
-
-
 
 if __name__ == '__main__':
 
@@ -81,4 +58,4 @@ if __name__ == '__main__':
     dummy = '/data/rsg/nlp/juanmoo1/projects/05_dev/workdir/collections_dir/pilot/bio/ner_input.txt'
 
 
-    make_empty_ner_bio(struct_path, dummy)
+    # make_empty_ner_bio(struct_path, dummy)
