@@ -1,8 +1,8 @@
-import utils
 import os
 from ya.dotdict import DotDict
 from tempfile import TemporaryDirectory
 from medtrialextractor import formatting
+from medtrialextractor.train import prod_predict
 
 def create_extraction(input_struct_path, model_dir, debug=False):
 
@@ -19,6 +19,28 @@ def create_extraction(input_struct_path, model_dir, debug=False):
     formatting.make_empty_ner_bio(input_struct_path, ner_input_file_path)
 
     # Step 2: Make NER predictions
+    cache_dir = os.path.join(root_dir, 'cache_dir')
+    ner_labels_path = os.path.join(model_dir, 'ner_labels.txt')
+    ner_model_path = os.path.join(model_dir, 'ner')
+    ner_output_file_path = os.path.join(root_dir, 'ner_output.txt')
+
+    model_args = DotDict()
+    model_args['model_name_or_path'] = ner_model_path
+    model_args['cache_dir'] = cache_dir
+    model_args['use_fast'] = True
+    model_args['use_cls'] = False
+    model_args['use_crf'] = True
+
+    predict_args = DotDict()
+    predict_args['labels'] = ner_labels_path
+    predict_args['no_cuda'] = False
+    predict_args['input_file'] = ner_input_file_path
+    predict_args['max_seq_length'] = 512
+    predict_args['overwrite_cache'] = True
+    predict_args['batch_size'] = 256
+    predict_args['output_file'] = ner_output_file_path
+
+    prod_predict(model_args, predict_args)
 
     # Step 3: Load NER predictions into struct
 
