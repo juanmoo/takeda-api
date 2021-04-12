@@ -81,8 +81,14 @@ def create_extraction(input_struct_path, model_dir, debug=False):
     role_predict(model_args, predict_args)
 
     # Step 6: Load RD predictions
+    print('Loading RD predictions into struct ...')
+    struct_rd_pred_path = os.path.join(root_dir, 'struct_rd_pred.json')
+    formatting.load_rd_predictions(struct_ner_pred_path, rd_output_file_path, struct_rd_pred_path)
 
     # Step 7: Creat tabular summary output
+    print('Creating output table ...')
+    output_table_path = os.path.join(root_dir, 'output_table.xlsx')
+    formatting.create_table(struct_rd_pred_path, output_table_path)
 
 
 if __name__ == '__main__':
