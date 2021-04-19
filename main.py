@@ -8,6 +8,8 @@ import utils
 import os
 from pathlib import Path
 from os import environ
+from extract import create_extraction
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -87,6 +89,64 @@ class listModels(Resource):
         }
 
 api.add_resource(listModels, '/listModels')
+
+class createExtraction(Resource):
+    def post(self):
+        
+        # Create extraction
+        model_name = request.form['modelName']
+        collection_name = request.form['collectionName']
+
+        collections_dir = environ.get('COLLECTIONS_DIR')
+        models_dir = environ.get('MODELS_DIR')
+        extractions_dir = environ.get('EXTRACTIONS_DIR')
+
+        model_path = os.path.join(models_dir, model_name)
+        model_exists = os.path.exists(model_path)
+        print(f'Model Path: {model_path}, exists: {model_exists}')
+
+
+        collection_path = os.path.join(collections_dir, collection_name)
+        collection_exists = os.path.exists(collection_path)
+        print(f'Collection Path: {collection_path}; collection exists: {collection_exists}')
+
+        extraction_dir_path = os.path.join(extractions_dir, collection_name + '__' + model_name)
+        os.makedirs(extraction_dir_path, exist_ok=True)
+
+
+        input_struct_path = os.path.join(collection_path, 'structs', 'struct_base.json')
+        extraction_args = (input_struct_path, model_path, extraction_dir_path, True)
+        thread = Thread(target=create_extraction, args=extraction_args)
+        thread.start()
+
+api.add_resource(createExtraction, '/createExtraction')
+
+class listExtractions(Resource):
+    def get(self):
+
+        # List all available extractions
+        extractions_dir = environ.get('EXTRACTIONS_DIR')
+        extraction_list = os.listdir(extractions_dir)
+
+        extractions = []
+        for eid in extraction_list:
+            collection_name, model_name = eid.split('__')
+            extraction_dir = os.path.join(extractions_dir, eid)
+            mtime = os.path.getmtime(extraction_dir)
+            print(f'Modified time: {mtime}')
+
+            extractions.append({
+                'collection': collection_name,
+                'model': model_name,
+                'modtime': str(datetime.fromtimestamp(mtime))
+            })
+
+        # extractions = [{'collection': e[0], 'model': e[1]} for e in map(lambda s: s.split('__'), extraction_list)]
+
+        return extractions
+
+api.add_resource(listExtractions, '/listExtractions')
+
 
 # Add Resources to app
 if __name__ == '__main__':

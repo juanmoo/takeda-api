@@ -1,10 +1,11 @@
 import os
 from ya.dotdict import DotDict
+import shutil
 from tempfile import TemporaryDirectory
 from medtrialextractor import formatting
 from medtrialextractor.train import prod_predict, role_predict
 
-def create_extraction(input_struct_path, model_dir, debug=False):
+def create_extraction(input_struct_path, model_dir, extractions_dir, debug=False):
 
     if debug:
         temp_dir = '/data/rsg/nlp/juanmoo1/projects/05_dev/workdir/tempdir'
@@ -13,6 +14,7 @@ def create_extraction(input_struct_path, model_dir, debug=False):
     else:
         temp_dir = TemporaryDirectory()
         root_dir = os.path.join(temp_dir.name, 'root')
+    os.makedirs(root_dir, exist_ok=True)
 
     # Step 1: Create empty NER input
     print('Creating empty NER input file ...')
@@ -90,6 +92,10 @@ def create_extraction(input_struct_path, model_dir, debug=False):
     output_table_path = os.path.join(root_dir, 'output_table.xlsx')
     formatting.create_table(struct_rd_pred_path, output_table_path)
 
+    # Extraction Folder
+    extractions_table_path = os.path.join(extractions_dir, 'output_table.xlsx')
+    shutil.copy(output_table_path, extractions_table_path)
+    
 
 if __name__ == '__main__':
 
