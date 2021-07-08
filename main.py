@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 from flask_restful import Resource, Api
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -41,7 +41,7 @@ class uploadCollection(Resource):
             if f.filename.lower().endswith('.pdf'):
                 loaded_pdfs.append(f.filename)
                 f.save(file_path)
-        
+
         endpoint = environ.get('GROBID_URL')
         utils.process_uploaded_pdfs(pdfs_dir, xmls_dir, structs_dir, grobid_url=endpoint)
 
@@ -92,7 +92,7 @@ api.add_resource(listModels, '/listModels')
 
 class createExtraction(Resource):
     def post(self):
-        
+
         # Create extraction
         model_name = request.form['modelName']
         collection_name = request.form['collectionName']
@@ -141,17 +141,44 @@ class listExtractions(Resource):
                 'modtime': str(datetime.fromtimestamp(mtime))
             })
 
-        # extractions = [{'collection': e[0], 'model': e[1]} for e in map(lambda s: s.split('__'), extraction_list)]
-
-        return extractions
+        return { 'extractions': extractions }
 
 api.add_resource(listExtractions, '/listExtractions')
+
+class serveExtraction(Resource):
+    def get(self):
+
+        # Download queried extraction
+        args = request.args
+
+        model = args.get('model', None)
+        collection = args.get('collection', None)
+
+        if (not model) or (not collection):
+            return {
+                'error': 'No collection or model was found.'
+            }
+
+        extractions_dir = environ.get('EXTRACTIONS_DIR')
+        extraction_dir_path = os.path.join(extractions_dir, f'{collection}__{model}')
+        output_path = os.path.join(extraction_dir_path, 'output_table.xlsx')
+
+        print('Extraction Dir:')
+        print(extraction_dir_path)
+        print(os.path.exists(extraction_dir_path))
+        print(os.path.exists(output_path))
+
+        return send_from_directory(extraction_dir_path, 'output_table.xlsx')
+
+api.add_resource(serveExtraction, '/getExtraction')
 
 
 # Add Resources to app
 if __name__ == '__main__':
 
     # Load configuration file
+
+    print('Starting up server ... \n')
 
     # Assume in same directory for now
     config_path = Path('.') / '/.env'
